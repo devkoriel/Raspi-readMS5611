@@ -65,8 +65,6 @@ void main()
 		printf("C[%d] = %d\n", i + 1, C[i]);
 	}
 
-	delay_ms(1000);
-
 	D1 = BARO_read(Device_Address, CONV_D1_4096);
 	D2 = BARO_read(Device_Address, CONV_D2_4096);
 
