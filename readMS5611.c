@@ -32,8 +32,6 @@ unsigned int PROM_read(int DA, int PROM_CMD)
 	return wiringPiI2CReadReg16(DA, PROM_CMD);
 }
 
-unsigned int 
-
 void main()
 {
 	int Device_Adress;
