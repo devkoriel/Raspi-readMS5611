@@ -32,19 +32,44 @@ unsigned int PROM_read(int DA, int PROM_CMD)
 	return wiringPiI2CReadReg16(DA, PROM_CMD);
 }
 
+unsigned int BARO_read(int DA, int BARO_CMD)
+{
+	unsigned int First_16bits;
+	unsigned int Second_8bits;
+
+	unsigned int BARO;
+
+	First_16bits = wiringPiI2CReadReg16(DA, BARO_CMD);
+	Second_8bits = wiringPiI2CReadReg8(Da, BARO_CMD);
+
+	BARO = First_16bits * 256 + Second_8bits;
+
+	return BARO;
+}
+
 void main()
 {
-	int Device_Adress;
+	int Device_Address;
 	int i;
 
 	unsigned int C[6];
+	unsigned int D1;
+	unsigned int D2;
 
-	Device_Adress = wiringPiI2CSetup(MS5611_ADDRESS);
+	Device_Address = wiringPiI2CSetup(MS5611_ADDRESS);
 
 	for (i = 0; i < 6; i++)
 	{
-		C[i] = PROM_read(Device_Adress, CMD_PROM_READ + i * 2);
+		C[i] = PROM_read(Device_Address, CMD_PROM_READ + i * 2);
 
 		printf("C[%d] = %d\n", i + 1, C[i]);
 	}
+
+	delay_ms(1000);
+
+	D1 = BARO_read(Device_Address, CONV_D1_4096);
+	D2 = BARO_read(Device_Address, CONV_D2_4096);
+
+	printf("D1 = %d\n", D1);
+	printf("D2 = %d", D2);
 }
