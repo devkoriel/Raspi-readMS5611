@@ -40,7 +40,7 @@ unsigned int BARO_read(int DA, int BARO_CMD)
 	unsigned int BARO;
 
 	First_16bits = wiringPiI2CReadReg16(DA, BARO_CMD);
-	Second_8bits = wiringPiI2CReadReg8(Da, BARO_CMD);
+	Second_8bits = wiringPiI2CReadReg8(DA, BARO_CMD);
 
 	BARO = First_16bits * 256 + Second_8bits;
 
