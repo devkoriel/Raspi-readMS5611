@@ -41,10 +41,10 @@ void main()
 
 	Device_Adress = wiringPiI2CSetup(MS5611_ADDRESS);
 
-	for (i = 0; i < 7; i++)
+	for (i = 0; i < 6; i++)
 	{
 		C[i] = PROM_read(Device_Adress, CMD_PROM_READ + i * 2);
 
-		printf("C[%d] = %d", i + 1, C[i]);
+		printf("C[%d] = %d\n", i + 1, C[i]);
 	}
 }
