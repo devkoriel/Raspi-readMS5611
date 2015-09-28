@@ -34,17 +34,7 @@ unsigned int PROM_read(int DA, int PROM_CMD)
 
 unsigned int BARO_read(int DA, int BARO_CMD)
 {
-	unsigned int First_16bits;
-	unsigned int Second_8bits;
-
-	unsigned int BARO;
-
-	First_16bits = wiringPiI2CReadReg16(DA, BARO_CMD);
-	Second_8bits = wiringPiI2CReadReg8(DA, BARO_CMD);
-
-	BARO = First_16bits * 256 + Second_8bits;
-
-	return BARO;
+	return i2c_smbus_read_block_data(DA, BARO_CMD);
 }
 
 void main()
@@ -53,8 +43,8 @@ void main()
 	int i;
 
 	unsigned int C[6];
-	unsigned int D1;
-	unsigned int D2;
+	unsigned long D1;
+	unsigned long D2;
 
 	Device_Address = wiringPiI2CSetup(MS5611_ADDRESS);
 
