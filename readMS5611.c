@@ -38,6 +38,8 @@
 
 unsigned int PROM_read(int DA, int PROM_CMD)
 {
+	unsigned int PROM_DATA;
+
 	wiringPiI2CWrite(DA, PROM_CMD);
 	read(DA, PROM_DATA, 2);
 	close(DA);
