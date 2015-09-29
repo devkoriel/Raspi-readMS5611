@@ -12,6 +12,7 @@
 #include <linux/types.h>
 #include <fcntl.h>
 #include <math.h>
+#include <termios.h> // Used for UART
 
 #define MS5611_ADDRESS 0x77
 
@@ -36,7 +37,7 @@
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
-#define SEA_LEVEL_PRESSURE 1023.20
+#define SEA_LEVEL_PRESSURE 1023.20 // Seoul 1023.20hPa
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
@@ -84,6 +85,53 @@ long CONV_read(int DA, char CONV_CMD)
 	ret = D[0] * (unsigned long)65536 + D[1] * (unsigned long)256 + D[2];
 
 	return ret;
+}
+
+void setup_USART()
+{
+	//-------------------------
+	//----- SETUP USART 0 -----
+	//-------------------------
+	//At bootup, pins 8 and 10 are already set to UART0_TXD, UART0_RXD (ie the alt0 function) respectively
+	int uart0_filestream = -1;
+
+	//OPEN THE UART
+	//The flags (defined in fcntl.h):
+	//	Access modes (use 1 of these):
+	//		O_RDONLY - Open for reading only.
+	//		O_RDWR - Open for reading and writing.
+	//		O_WRONLY - Open for writing only.
+	//
+	//	O_NDELAY / O_NONBLOCK (same function) - Enables nonblocking mode. When set read requests on the file can return immediately with a failure status
+	//											if there is no input immediately available (instead of blocking). Likewise, write requests can also return
+	//											immediately with a failure status if the output can't be written immediately.
+	//
+	//	O_NOCTTY - When set and path identifies a terminal device, open() shall not cause the terminal device to become the controlling terminal for the process.
+	uart0_filestream = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NDELAY);		//Open in non blocking read/write mode
+	if (uart0_filestream == -1)
+	{
+		//ERROR - CAN'T OPEN SERIAL PORT
+		printf("Error - Unable to open UART.  Ensure it is not in use by another application\n");
+	}
+
+	//CONFIGURE THE UART
+	//The flags (defined in /usr/include/termios.h - see http://pubs.opengroup.org/onlinepubs/007908799/xsh/termios.h.html):
+	//	Baud rate:- B1200, B2400, B4800, B9600, B19200, B38400, B57600, B115200, B230400, B460800, B500000, B576000, B921600, B1000000, B1152000, B1500000, B2000000, B2500000, B3000000, B3500000, B4000000
+	//	CSIZE:- CS5, CS6, CS7, CS8
+	//	CLOCAL - Ignore modem status lines
+	//	CREAD - Enable receiver
+	//	IGNPAR = Ignore characters with parity errors
+	//	ICRNL - Map CR to NL on input (Use for ASCII comms where you want to auto correct end of line characters - don't use for bianry comms!)
+	//	PARENB - Parity enable
+	//	PARODD - Odd parity (else even)
+	struct termios options;
+	tcgetattr(uart0_filestream, &options);
+	options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;		//<Set baud rate
+	options.c_iflag = IGNPAR;
+	options.c_oflag = 0;
+	options.c_lflag = 0;
+	tcflush(uart0_filestream, TCIFLUSH);
+	tcsetattr(uart0_filestream, TCSANOW, &options);
 }
 
 void main()
@@ -135,6 +183,8 @@ void main()
 		//printf("C[%d] = %d\n", i, C[i]);
 	}
 
+	setup_USART();
+
 	while (1){
 		D1 = CONV_read(fd, CONV_D1_4096);
 		D2 = CONV_read(fd, CONV_D2_4096);
@@ -178,7 +228,7 @@ void main()
 		printf("Temparature : %.2f C", Temparature);
 		printf("  Pressure : %.2f mbar", Pressure);
 
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (temperature_v + 273.15)) / 0.0065;
+		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
 		printf("  Altitude : %.2f m\n", Altitude);
 
