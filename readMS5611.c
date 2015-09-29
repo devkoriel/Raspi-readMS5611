@@ -1,9 +1,18 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/poll.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <time.h>
-#include <wiringPi.h>
-#include <wiringPiI2C.h>
+
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
 
 #define MS5611_ADDRESS 0x77
 
@@ -29,13 +38,17 @@
 
 unsigned int PROM_read(int DA, int PROM_CMD)
 {
-	return wiringPiI2CReadReg16(DA, PROM_CMD);
+	wiringPiI2CWrite(DA, PROM_CMD);
+	read(DA, PROM_DATA, 2);
+	close(DA);
+
+	return PROM_DATA;
 }
 
-unsigned int BARO_read(int DA, int BARO_CMD)
+/*unsigned int BARO_read(int DA, int BARO_CMD)
 {
 	return i2c_smbus_read_block_data(DA, BARO_CMD);
-}
+}*/
 
 void main()
 {
@@ -55,9 +68,9 @@ void main()
 		printf("C[%d] = %d\n", i + 1, C[i]);
 	}
 
-	D1 = BARO_read(Device_Address, CONV_D1_4096);
-	D2 = BARO_read(Device_Address, CONV_D2_4096);
+	//D1 = BARO_read(Device_Address, CONV_D1_4096);
+	//D2 = BARO_read(Device_Address, CONV_D2_4096);
 
-	printf("D1 = %d\n", D1);
-	printf("D2 = %d", D2);
+	//printf("D1 = %d\n", D1);
+	//printf("D2 = %d", D2);
 }
