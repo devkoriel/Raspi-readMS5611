@@ -28,11 +28,11 @@
 #define CMD_ADC_READ  0x00
 #define CMD_PROM_READ 0xA0
 
-#define OSR_256      1
-#define OSR_512      2
-#define OSR_1024     3
-#define OSR_2048     5
-#define OSR_4096     10
+#define OSR_256      1000 //us
+#define OSR_512      2000 //us
+#define OSR_1024     3000 //us
+#define OSR_2048     5000 //us
+#define OSR_4096     10000 //us
 
 
 
@@ -40,7 +40,7 @@ unsigned int PROM_read(int DA, char PROM_CMD)
 {
 	uint16_t ret = 0;
 	uint8_t r8b[] = { 0, 0 };
-
+	
 	if (write(DA, &PROM_CMD, 1) != 1){
 		printf("read set reg Failed to write to the i2c bus.\n");
 	}
@@ -50,6 +50,36 @@ unsigned int PROM_read(int DA, char PROM_CMD)
 	}
 
 	ret = r8b[0] * 256 + r8b[1];
+	return ret;
+}
+
+long CONV_read(int DA, char CONV_CMD)
+{
+	long ret = 0;
+	uint8_t D[] = { 0, 0, 0 };
+
+	int  h;
+	char zero = 0x0;
+
+	if (write(DA, &CONV_CMD, 1) != 1) {
+		printf("write reg 8 bit Failed to write to the i2c bus.\n");
+	}
+
+	usleep(OSR_4096);
+
+	if (write(DA, &zero, 1) != 1) {
+		printf("write reset 8 bit Failed to write to the i2c bus.\n");
+	}
+
+	h = read(DA, &D, 3);
+
+	if (h != 3) {
+		printf("Failed to read from the i2c bus %d.\n", h);
+
+	}
+
+	ret = D[0] * (unsigned long)65536 + D[1] * (unsigned long)256 + D[2];
+
 	return ret;
 }
 
@@ -96,7 +126,13 @@ void main()
 		usleep(1000);
 
 		C[i] = PROM_read(fd, CMD_PROM_READ + (i * 2));
-		printf("C[%d] = %d\n", i+1, C[i]);
+		printf("C[%d] = %d\n", i, C[i]);
 	}
+
+	D1 = CONV_read(fd, CONV_D1_4096);
+	D2 = CONV_read(fd, CONV_D2_4096);
+
+	printf("D1 = %d\n", D1);
+	printf("D2 = %d\n", D2);
 
 }
