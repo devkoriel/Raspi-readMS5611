@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
@@ -45,7 +46,7 @@ unsigned int PROM_read(int DA, int PROM_CMD)
 		printf("read set reg Failed to write to the i2c bus.\n");
 	}
 
-	if (read(fd, r8b, 2) != 2){
+	if (read(DA, r8b, 2) != 2){
 		printf("Failed to read from the i2c bus.\n");
 	}
 
@@ -75,12 +76,12 @@ void main()
 	char buf0[26] = { 0, };
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
-		printf("Failed to open the bus.\n")
+		printf("Failed to open the bus.\n");
 			return -1;
 	}
 
 	if (ioctl(fd, I2C_SLAVE, MS5611_ADDRESS) < 0){
-		printf("Failed to acquire bus access and/or talk to slave.\n")
+		printf("Failed to acquire bus access and/or talk to slave.\n");
 			return -1;
 	}
 
