@@ -15,7 +15,6 @@
 
 #define MS5611_ADDRESS 0x77
 
-#define RESET         0x1E
 #define CONV_D1_256   0x40
 #define CONV_D1_512   0x42
 #define CONV_D1_1024  0x44
@@ -37,12 +36,12 @@
 
 
 
-unsigned int PROM_read(int DA, int PROM_CMD)
+unsigned int PROM_read(int DA, char PROM_CMD)
 {
 	uint16_t ret = 0;
 	uint8_t r8b[] = { 0, 0 };
 
-	if (write(DA, PROM_CMD, 1) != 1){
+	if (write(DA, &PROM_CMD, 1) != 1){
 		printf("read set reg Failed to write to the i2c bus.\n");
 	}
 
@@ -65,6 +64,8 @@ void main()
 	unsigned long D1;
 	unsigned long D2;
 
+	char RESET = 0x1E;
+
 	float P;
 	float T;
 	float dT;
@@ -85,7 +86,7 @@ void main()
 			return -1;
 	}
 
-	if (write(fd, RESET, 1) != 1) {
+	if (write(fd, &RESET, 1) != 1) {
 		printf("write reg 8 bit Failed to write to the i2c bus.\n");
 	}
 
