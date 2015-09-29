@@ -12,7 +12,6 @@
 #include <linux/types.h>
 #include <fcntl.h>
 #include <math.h>
-#include <termios.h> // Used for UART
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
@@ -90,6 +89,12 @@ long CONV_read(int DA, char CONV_CMD)
 	return ret;
 }
 
+typedef union
+{
+	float f;
+	char tx_buffer[sizeof(float)]
+} float_to_char;
+
 void main()
 {
 	int i;
@@ -114,7 +119,7 @@ void main()
 
 	float Altitude;
 
-	char tx_buffer[4];
+	float_to_char data_s, data_r;
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
 		printf("Failed to open the bus.\n");
@@ -179,15 +184,17 @@ void main()
 		Temparature = (double)TEMP / (double)100;
 		Pressure = (double)P / (double)100;
 
-		printf("Temparature : %.2f C", Temparature);
-		printf("  Pressure : %.2f mbar", Pressure);
+		//printf("Temparature : %.2f C", Temparature);
+		//printf("  Pressure : %.2f mbar", Pressure);
 
 		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
-		printf("  Altitude : %.2f m", Altitude);
+		//printf("  Altitude : %.2f m", Altitude);
 
-		tx_buffer = (char)(Altitude * 100);
-		printf("  tx_buffer : %d\n", tx_buffer);
+		data_s.f = Altitude * 100;
 
+		memcpy(&data_r.tx_buffer, &data_s.f, sizeof(float))
+
+		printf("%x %x %x %x\n", data_r.tx_buffer[0], data_r.tx_buffer[1], data_r.tx_buffer[2], data_r.tx_buffer[3]);
 	}
 }
