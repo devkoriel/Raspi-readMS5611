@@ -13,9 +13,6 @@
 #include <fcntl.h>
 #include <math.h>
 
-#include <wiringPi.h>
-#include <wiringSerial.h>
-
 #define MS5611_ADDRESS 0x77
 
 #define CONV_D1_256   0x40
@@ -39,13 +36,13 @@
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
-#define SEA_LEVEL_PRESSURE 1023.20 // Seoul 1023.20hPa
+#define SEA_LEVEL_PRESSURE 1023.20
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
 	uint16_t ret = 0;
 	uint8_t r8b[] = { 0, 0 };
-	
+
 	if (write(DA, &PROM_CMD, 1) != 1){
 		printf("read set reg Failed to write to the i2c bus.\n");
 	}
@@ -89,12 +86,6 @@ long CONV_read(int DA, char CONV_CMD)
 	return ret;
 }
 
-typedef union
-{
-	float f;
-	char tx_buffer[sizeof(float)]
-} float_to_char;
-
 void main()
 {
 	int i;
@@ -119,16 +110,16 @@ void main()
 
 	float Altitude;
 
-	float_to_char data_s, data_r;
+	char buf0[26] = { 0, };
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
 		printf("Failed to open the bus.\n");
-			return -1;
+		return -1;
 	}
 
 	if (ioctl(fd, I2C_SLAVE, MS5611_ADDRESS) < 0){
 		printf("Failed to acquire bus access and/or talk to slave.\n");
-			return -1;
+		return -1;
 	}
 
 	if (write(fd, &RESET, 1) != 1) {
@@ -177,24 +168,19 @@ void main()
 			OFF -= OFF1;
 			SENS -= SENS1;
 		}
-		
+
 
 		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15));
 
 		Temparature = (double)TEMP / (double)100;
 		Pressure = (double)P / (double)100;
 
-		//printf("Temparature : %.2f C", Temparature);
-		//printf("  Pressure : %.2f mbar", Pressure);
+		printf("Temparature : %.2f C", Temparature);
+		printf("  Pressure : %.2f mbar", Pressure);
 
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
+		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (temperature_v + 273.15)) / 0.0065;
 
-		//printf("  Altitude : %.2f m", Altitude);
+		printf("  Altitude : %.2f m\n", Altitude);
 
-		data_s.f = Altitude * 100;
-
-		memcpy(&data_r.tx_buffer, &data_s.f, sizeof(data_s.f));
-
-		printf("%c %c %c %c\n", data_r.tx_buffer[0], data_r.tx_buffer[1], data_r.tx_buffer[2], data_r.tx_buffer[3]);
 	}
 }
