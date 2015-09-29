@@ -178,7 +178,7 @@ void main()
 		printf("Temparature : %.2f C", Temparature);
 		printf("  Pressure : %.2f mbar", Pressure);
 
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (temperature_v + 273.15)) / 0.0065;
+		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
 		printf("  Altitude : %.2f m\n", Altitude);
 
