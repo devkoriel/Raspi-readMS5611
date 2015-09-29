@@ -110,6 +110,8 @@ void main()
 
 	float Altitude;
 
+	char tx_buffer[128];
+
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
 		printf("Failed to open the bus.\n");
 		return -1;
@@ -173,11 +175,13 @@ void main()
 		Temparature = (double)TEMP / (double)100;
 		Pressure = (double)P / (double)100;
 
-		printf("Temparature : %.2f C", Temparature);
-		printf("  Pressure : %.2f mbar", Pressure);
+		//printf("Temparature : %.2f C", Temparature);
+		//printf("  Pressure : %.2f mbar", Pressure);
 
 		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
-		printf("  Altitude : %.2f m\n", Altitude);
+		//printf("  Altitude : %.2f m\n", Altitude);
+
+		sprintf(tx_buffer, "float to string : %.2f", Altitude);
 	}
 }
