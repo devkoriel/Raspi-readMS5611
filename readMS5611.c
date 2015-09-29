@@ -50,7 +50,7 @@ unsigned int PROM_read(int DA, int PROM_CMD)
 		printf("Failed to read from the i2c bus.\n");
 	}
 
-	ret = (uint16_t(r8b[0]) << 8) | uint16_t(r8b[1]);
+	ret = r8b[0] * 256 + r8b[1];
 	return ret;
 }
 
