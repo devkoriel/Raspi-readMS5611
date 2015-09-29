@@ -86,22 +86,22 @@ long CONV_read(int DA, char CONV_CMD)
 
 void main()
 {
-	unsigned int i;
+	int i;
 
 	int fd;
 
-	unsigned int C[7];
+	uint16_t C[7];
 
-	unsigned long D1;
-	unsigned long D2;
+	uint32_t D1;
+	uint32_t D2;
 
 	char RESET = 0x1E;
 
-	float dT;
-	float TEMP;
-	float OFF;
-	float SENS;
-	float P;
+	int64_t dT;
+	int32_t TEMP;
+	int64_t OFF;
+	int64_t SENS;
+	int32_t P;
 
 	double Temparature;
 	double Pressure;
@@ -132,7 +132,7 @@ void main()
 		usleep(1000);
 
 		C[i] = PROM_read(fd, CMD_PROM_READ + (i * 2));
-		printf("C[%d] = %d\n", i, C[i]);
+		//printf("C[%d] = %d\n", i, C[i]);
 	}
 
 	while (1){
