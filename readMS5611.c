@@ -193,7 +193,7 @@ void main()
 
 		data_s.f = Altitude * 100;
 
-		memcpy(&data_r.tx_buffer, &data_s.f, sizeof(float))
+		memcpy(&data_r.tx_buffer, &data_s.f, sizeof(float));
 
 		printf("%x %x %x %x\n", data_r.tx_buffer[0], data_r.tx_buffer[1], data_r.tx_buffer[2], data_r.tx_buffer[3]);
 	}
