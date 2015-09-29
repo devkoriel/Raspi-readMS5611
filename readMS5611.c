@@ -1,18 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/poll.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <time.h>
-
-#include <linux/i2c.h>
-#include <linux/i2c-dev.h>
 
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
