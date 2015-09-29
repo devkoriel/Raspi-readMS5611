@@ -50,6 +50,7 @@ unsigned int PROM_read(int DA, char PROM_CMD)
 	}
 
 	ret = r8b[0] * 256 + r8b[1];
+
 	return ret;
 }
 
@@ -102,6 +103,9 @@ void main()
 	float SENS;
 	float P;
 
+	double Temparature;
+	double Pressure;
+
 	float H_alt;
 	float H_temp;
 	float Altitude;
@@ -136,14 +140,46 @@ void main()
 		D2 = CONV_read(fd, CONV_D2_4096);
 
 		dT = D2 - (uint32_t)C[5] * pow(2, 8);
-		TEMP = (2000 + (dT * (int64_t)C[5] / pow(2, 23))) / 100;
+		TEMP = (2000 + (dT * (int64_t)C[5] / pow(2, 23)));
 
 		OFF = (int64_t)C[2] * pow(2, 16) + (dT*C[4]) / pow(2, 7);
 		SENS = (int32_t)C[1] * pow(2, 15) + dT*C[3] / pow(2, 8);
-		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15)) / 100;
 
-		printf("Temparature : %f", TEMP);
-		printf("Pressure : %f", P);
+		if (TEMP < 2000) // if temperature lower than 20 Celsius 
+		{
+			int32_t T1 = 0;
+			int64_t OFF1 = 0;
+			int64_t SENS1 = 0;
+
+			T1 = pow(dT, 2) / 2147483648;
+			OFF1 = 5 * pow((TEMP - 2000), 2) / 2;
+			SENS1 = 5 * pow((TEMP - 2000), 2) / 4;
+
+			if (TEMP < -1500) // if temperature lower than -15 Celsius 
+			{
+				OFF1 = OFF1 + 7 * pow((TEMP + 1500), 2);
+				SENS1 = SENS1 + 11 * pow((TEMP + 1500), 2) / 2;
+			}
+
+			TEMP -= T1;
+			OFF -= OFF1;
+			SENS -= SENS1;
+		}
+
+		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15));
+
+		Temparature = (double)TEMP / (double)100;
+		Pressure = (double)P / (double)100;
+
+		printf("Temparature : %f\n", Temparature);
+		printf("Pressure : %f\n", Temparature);
+
+		H_temp = Pressure / 1013.25;
+		H_alt = (1 - pow(H_temp, 0.190284)) * 145366.45;
+
+		Altitude = 0.3048*H_alt;
+
+		printf("Altitude : %f\n", Altitude);
 
 	}
 }
