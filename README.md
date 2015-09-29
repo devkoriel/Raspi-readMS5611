@@ -1,6 +1,9 @@
 # Raspi-readMS5611
 This project writes/reads MS5611 TEMP/P sensor.
 
+compile with "sudo gcc -o readMS5611 readMS5611.c -lm" (-lm is option to use math.h library in Linux OS)
+execute with "sudo ./readMS5611"
+
 # Warnings
 default dev-file is set as "/dev/i2c-1". You should change this to "/dev/i2c-0" if your configuration is different with mine.
 You can figure out your configuration in "/dev" (check "/dev/i2c-'number'")
