@@ -12,6 +12,10 @@
 #include <linux/types.h>
 #include <fcntl.h>
 #include <math.h>
+#include <termios.h> // Used for UART
+
+#include <wiringPi.h>
+#include <wiringPiSerial.h>
 
 #define MS5611_ADDRESS 0x77
 
@@ -36,7 +40,7 @@
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
-#define SEA_LEVEL_PRESSURE 1023.20
+#define SEA_LEVEL_PRESSURE 1023.20 // Seoul 1023.20hPa
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
@@ -110,7 +114,7 @@ void main()
 
 	float Altitude;
 
-	char buf0[26] = { 0, };
+	unsigned char tx_buffer[4];
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
 		printf("Failed to open the bus.\n");
@@ -178,9 +182,12 @@ void main()
 		printf("Temparature : %.2f C", Temparature);
 		printf("  Pressure : %.2f mbar", Pressure);
 
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (temperature_v + 273.15)) / 0.0065;
+		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
-		printf("  Altitude : %.2f m\n", Altitude);
+		printf("  Altitude : %.2f m", Altitude);
+
+		tx_buffer = (char)(Altitude * 100);
+		printf("  tx_buffer : %d\n", tx_buffer);
 
 	}
 }
