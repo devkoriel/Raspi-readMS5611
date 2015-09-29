@@ -96,14 +96,16 @@ void main()
 
 	char RESET = 0x1E;
 
-	float P;
-	float T;
 	float dT;
+	float TEMP;
 	float OFF;
 	float SENS;
+	float P;
+
 	float H_alt;
 	float H_temp;
 	float Altitude;
+
 	char buf0[26] = { 0, };
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
@@ -129,10 +131,19 @@ void main()
 		printf("C[%d] = %d\n", i, C[i]);
 	}
 
-	D1 = CONV_read(fd, CONV_D1_4096);
-	D2 = CONV_read(fd, CONV_D2_4096);
+	while (1){
+		D1 = CONV_read(fd, CONV_D1_4096);
+		D2 = CONV_read(fd, CONV_D2_4096);
 
-	printf("D1 = %d\n", D1);
-	printf("D2 = %d\n", D2);
+		dT = D2 - (uint32_t)C[5] * pow(2, 8);
+		TEMP = (2000 + (dT * (int64_t)C[5] / pow(2, 23))) / 100;
 
+		OFF = (int64_t)C[2] * pow(2, 16) + (dT*C[4]) / pow(2, 7);
+		SENS = (int32_t)C[1] * pow(2, 15) + dT*C[3] / pow(2, 8);
+		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15)) / 100;
+
+		printf("Temparature : %f", TEMP);
+		printf("Pressure : %f", P);
+
+	}
 }
