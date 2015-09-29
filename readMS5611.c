@@ -14,6 +14,9 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
+
 #define MS5611_ADDRESS 0x77
 
 #define RESET         0x1E
