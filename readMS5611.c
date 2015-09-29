@@ -148,7 +148,6 @@ void main()
 		/*
 		SECOND ORDER TEMPARATURE COMPENSATION
 		*/
-		/*
 		if (TEMP < 2000) // if temperature lower than 20 Celsius 
 		{
 			int32_t T1 = 0;
@@ -169,22 +168,22 @@ void main()
 			OFF -= OFF1;
 			SENS -= SENS1;
 		}
-		*/
+		
 
 		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15));
 
 		Temparature = (double)TEMP / (double)100;
 		Pressure = (double)P / (double)100;
 
-		printf("Temparature : %f\n", Temparature);
-		printf("Pressure : %f\n", Temparature);
+		printf("Temparature : %.2f C", Temparature);
+		printf("  Pressure : %.2f mbar\n", Pressure);
 
 		H_temp = Pressure / 1013.25;
 		H_alt = (1 - pow(H_temp, 0.190284)) * 145366.45;
 
 		Altitude = 0.3048*H_alt;
 
-		printf("Altitude : %f\n", Altitude);
+		//printf("Altitude : %f\n", Altitude);
 
 	}
 }
