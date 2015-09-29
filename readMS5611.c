@@ -201,5 +201,6 @@ void main()
 		//puts(tx_buffer);
 
 		serialPuts(fd_Serial, &tx_buffer);
+		serialFlush(fd_Serial);
 	}
 }
