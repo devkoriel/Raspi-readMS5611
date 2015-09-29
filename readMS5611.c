@@ -36,7 +36,7 @@
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
-#define SEA_LEVEL_PRESSURE 1023.20
+#define SEA_LEVEL_PRESSURE 1023.20 // Seoul 1023.20hPa
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
