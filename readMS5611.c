@@ -15,7 +15,7 @@
 #include <termios.h> // Used for UART
 
 #include <wiringPi.h>
-#include <wiringPiSerial.h>
+#include <wiringSerial.h>
 
 #define MS5611_ADDRESS 0x77
 
@@ -114,7 +114,7 @@ void main()
 
 	float Altitude;
 
-	unsigned char tx_buffer[4];
+	char tx_buffer[4];
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
 		printf("Failed to open the bus.\n");
