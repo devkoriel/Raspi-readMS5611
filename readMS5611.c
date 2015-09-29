@@ -145,6 +145,10 @@ void main()
 		OFF = (int64_t)C[2] * pow(2, 16) + (dT*C[4]) / pow(2, 7);
 		SENS = (int32_t)C[1] * pow(2, 15) + dT*C[3] / pow(2, 8);
 
+		/*
+		SECOND ORDER TEMPARATURE COMPENSATION
+		*/
+		/*
 		if (TEMP < 2000) // if temperature lower than 20 Celsius 
 		{
 			int32_t T1 = 0;
@@ -165,6 +169,7 @@ void main()
 			OFF -= OFF1;
 			SENS -= SENS1;
 		}
+		*/
 
 		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15));
 
