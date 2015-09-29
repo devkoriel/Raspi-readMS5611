@@ -13,6 +13,9 @@
 #include <fcntl.h>
 #include <math.h>
 
+#include <wiringPi.h>
+#include <wiringSerial.h>
+
 #define MS5611_ADDRESS 0x77
 
 #define CONV_D1_256   0x40
@@ -90,7 +93,7 @@ void main()
 {
 	int i;
 
-	int fd;
+	int fd, fd_Serial;
 
 	uint16_t C[7];
 
@@ -133,6 +136,18 @@ void main()
 
 		C[i] = PROM_read(fd, CMD_PROM_READ + (i * 2));
 		//printf("C[%d] = %d\n", i, C[i]);
+	}
+
+	if ((fd_Serial = serialOpen("/dev/ttyAMA0", 9600)) < 0)
+	{
+		fprintf(stderr, "Unable to open serial device: %s\n", strerror(errno));
+		return 1;
+	}
+
+	if (wiringPiSetup() == -1)
+	{
+		fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
+		return 1;
 	}
 
 	while (1){
@@ -183,5 +198,8 @@ void main()
 		//printf("  Altitude : %.2f m\n", Altitude);
 
 		sprintf(tx_buffer, "float to string : %.2f", Altitude);
+		//puts(tx_buffer);
+
+		serialPuts(fd_Serial, &tx_buffer);
 	}
 }
