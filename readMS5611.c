@@ -151,14 +151,14 @@ void main()
 			int64_t OFF1 = 0;
 			int64_t SENS1 = 0;
 
-			T1 = pow(dT, 2) / 2147483648;
-			OFF1 = 5 * pow((TEMP - 2000), 2) / 2;
-			SENS1 = 5 * pow((TEMP - 2000), 2) / 4;
+			T1 = pow((double)dT, 2) / 2147483648;
+			OFF1 = 5 * pow(((double)TEMP - 2000), 2) / 2;
+			SENS1 = 5 * pow(((double)TEMP - 2000), 2) / 4;
 
 			if (TEMP < -1500) // if temperature lower than -15 Celsius 
 			{
-				OFF1 = OFF1 + 7 * pow((TEMP + 1500), 2);
-				SENS1 = SENS1 + 11 * pow((TEMP + 1500), 2) / 2;
+				OFF1 = OFF1 + 7 * pow(((double)TEMP + 1500), 2);
+				SENS1 = SENS1 + 11 * pow(((double)TEMP + 1500), 2) / 2;
 			}
 
 			TEMP -= T1;
