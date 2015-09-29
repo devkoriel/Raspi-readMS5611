@@ -34,7 +34,9 @@
 #define OSR_2048     5000 //us
 #define OSR_4096     10000 //us
 
-
+// check daily sea level pressure at 
+// http://www.kma.go.kr/weather/observation/currentweather.jsp
+#define SEA_LEVEL_PRESSURE 1023.20
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
@@ -106,8 +108,6 @@ void main()
 	double Temparature;
 	double Pressure;
 
-	float H_alt;
-	float H_temp;
 	float Altitude;
 
 	char buf0[26] = { 0, };
@@ -176,14 +176,11 @@ void main()
 		Pressure = (double)P / (double)100;
 
 		printf("Temparature : %.2f C", Temparature);
-		printf("  Pressure : %.2f mbar\n", Pressure);
+		printf("  Pressure : %.2f mbar", Pressure);
 
-		H_temp = Pressure / 1013.25;
-		H_alt = (1 - pow(H_temp, 0.190284)) * 145366.45;
+		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (temperature_v + 273.15)) / 0.0065;
 
-		Altitude = 0.3048*H_alt;
-
-		//printf("Altitude : %f\n", Altitude);
+		printf("  Altitude : %.2f m\n", Altitude);
 
 	}
 }
