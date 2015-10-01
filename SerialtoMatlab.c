@@ -117,7 +117,8 @@ void main()
 
 	char tx_buffer[128];
 
-	long curSampledTime, prevSampledTime;
+	long start_Time, end_Time;
+	long Sampling_Time;
 	struct timespec spec;
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
@@ -159,7 +160,7 @@ void main()
 
 	while (1){
 		clock_gettime(CLOCK_REALTIME, &spec);
-		curSampledTime = round(spec.tv_nsec / 1.0e6);
+		start_Time = round(spec.tv_nsec / 1.0e6);
 
 		D1 = CONV_read(fd, CONV_D1_4096);
 		D2 = CONV_read(fd, CONV_D2_4096);
@@ -206,7 +207,6 @@ void main()
 		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
 		printf("  Altitude : %.2f m", Altitude);
-		printf("  Sampling Time : %.2f ms\n", curSampledTime - prevSampledTime);
 
 		sprintf(tx_buffer, "%.2f", Altitude);
 		//puts(tx_buffer);
@@ -214,7 +214,10 @@ void main()
 		serialPuts(fd_Serial, tx_buffer);
 		usleep(1000);
 
-		prevSampledTime = curSampledTime;
+		end_Time = round(spec.tv_nsec / 1.0e6);
+		Sampling_Time = end_Time - start_Time
+
+		printf("  Sampling Time : %ld ms\n", Sampling_Time);
 	}
 	serialClose(fd_Serial);
 }
