@@ -73,8 +73,8 @@ struct Kalman_set{
 struct Kalman_set fltd_alt;
 
 static const float R_alt = 0.30;
-static const float Q_alt = 0.01;
-static const float Q_Va = 0.04;
+static const float Q_alt = 0.02;
+static const float Q_Va = 0.2;
 
 void initKalman_set(struct Kalman_set *kalman, const float Q_alt, const float Q_Va, const float R_alt) {
 	kalman->Q_alt = Q_alt;
@@ -206,8 +206,8 @@ void main()
 
 	long curSampled_time = 0; //ms
 	long prevSampled_time = 0; //ms
-	long Sampling_time, prevSampling_time; //ms
-	long Sampling_time_s; //sampling time in seconds
+	float Sampling_time, prevSampling_time; //ms
+	float Sampling_time_s; //sampling time in seconds
 	struct timespec spec;
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
@@ -254,12 +254,12 @@ void main()
 		curSampled_time = round(spec.tv_nsec / 1.0e6);
 
 		prevSampling_time = Sampling_time;
-		Sampling_time = curSampled_time - prevSampled_time;
+		Sampling_time = (float)curSampled_time - (float)prevSampled_time;
 
 		if (Sampling_time < 0) // to prevent negative sampling time
 			Sampling_time = prevSampling_time;
 
-		Sampling_time_s = Sampling_time * (1 / 1000);
+		Sampling_time_s = Sampling_time * 0.001;
 
 		D1 = CONV_read(fd, CONV_D1_4096);
 		D2 = CONV_read(fd, CONV_D2_4096);
@@ -310,7 +310,7 @@ void main()
 			vel_Alt = (Altitude - prevAltitude) / Sampling_time_s;
 
 			predict(&fltd_alt, vel_Alt, Sampling_time_s);
-			fin_Alt = update(&fltd_alt, Altitude) / 10;
+			fin_Alt = update(&fltd_alt, Altitude);
 
 			if (initIndex < initSize) {
 				alt_Init[initIndex] = fin_Alt;
@@ -329,7 +329,7 @@ void main()
 			}
 			printf("Altitude : %.2f m", Altitude);
 			printf(" Filtered Altitude : %.2f m", fin_Alt);
-			printf("  Sampling Time : %f ms\n", Sampling_time);
+			printf("  Sampling Time : %f s\n", Sampling_time_s);
 		}
 
 		prevSampled_time = curSampled_time;
