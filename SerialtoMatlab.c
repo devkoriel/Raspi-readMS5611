@@ -72,9 +72,16 @@ struct Kalman_set{
 
 struct Kalman_set fltd_alt;
 
+// Kalman filter convariances
 static const float R_alt = 0.30;
-static const float Q_alt = 0.02;
-static const float Q_Va = 0.2;
+static const float Q_alt = 0.01;
+static const float Q_Va = 0.04;
+
+// LPF constants
+float LPF_error = 0;
+float LPF_ee = 0;
+float LPF_ee1 = 0;
+float LPF_ww = 0;
 
 void initKalman_set(struct Kalman_set *kalman, const float Q_alt, const float Q_Va, const float R_alt) {
 	kalman->Q_alt = Q_alt;
@@ -170,6 +177,19 @@ float update(struct Kalman_set *kalman, float alt_m) {
 	return kalman->kalman_alt;
 }
 
+float LPF(float input, float CutOffFrequency, float SamplingTime)
+{
+	float output;
+
+	LPF_error = input - LPF_ww;
+	LPF_ee = LPF_error * CufOffFrequency;
+	LPF_ww = LPF_ww + (LPF_ee + LPF_ee1)*SamplingTime*0.5;
+	LPF_ee1 = LPF_ee;
+	output = LPF_ww;
+
+	return output;
+}
+
 void main()
 {
 	int i, j;
@@ -200,7 +220,8 @@ void main()
 
 	float Altitude, prevAltitude;
 	float vel_Alt;
-	float fin_Alt;
+	float kalman_Alt;
+	float LPF_Alt
 
 	char tx_buffer[128];
 
@@ -310,10 +331,10 @@ void main()
 			vel_Alt = (Altitude - prevAltitude) / Sampling_time_s;
 
 			predict(&fltd_alt, vel_Alt, Sampling_time_s);
-			fin_Alt = update(&fltd_alt, Altitude);
+			kalman_Alt = update(&fltd_alt, Altitude);
 
 			if (initIndex < initSize) {
-				alt_Init[initIndex] = fin_Alt;
+				alt_Init[initIndex] = kalman_Alt;
 				if (initIndex == initSize - 1) {
 					for (j = 1; j <= initSize; j++) {
 						sum += alt_Init[j];
@@ -325,11 +346,15 @@ void main()
 			}
 
 			else {
-				fin_Alt += Cal;
+				kalman_Alt += Cal;
 			}
+
+			LPF_Alt = LPF(Altitude, 15, Sampling_time_s);
+
 			printf("Altitude : %.2f m", Altitude);
-			printf(" Filtered Altitude : %.2f m", fin_Alt);
-			printf("  Sampling Time : %f s\n", Sampling_time_s);
+			printf(" Kalman : %.2f m", kalman_Alt);
+			printf(" LPF : %.2f m", LPF_Alt);
+			printf(" Sampling Time : %f s\n", Sampling_time_s);
 		}
 
 		prevSampled_time = curSampled_time;
