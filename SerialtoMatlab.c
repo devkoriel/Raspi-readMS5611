@@ -117,7 +117,7 @@ void main()
 
 	char tx_buffer[128];
 
-	long ms;
+	long curSampledTime, prevSampledTime;
 	struct timespec spec;
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
