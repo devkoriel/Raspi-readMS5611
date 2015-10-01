@@ -203,7 +203,8 @@ void main()
 
 	char tx_buffer[128];
 
-	long curSampled_time, prevSampled_time; //ms
+	long curSampled_time = 0; //ms
+	long prevSampled_time = 0; //ms
 	long Sampling_time, prevSampling_time; //ms
 	long Sampling_time_s; //sampling time in seconds
 	struct timespec spec;
