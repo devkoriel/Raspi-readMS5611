@@ -303,11 +303,11 @@ void main()
 
 		prevAltitude = Altitude;
 		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
-		vel_Alt = (Altitude - prevAltitude) / Sampling_time_s;
 
 		if (prevSampled_time > 0) {
-			predict(&fltd_alt, vel_Alt, Sampling_time_s);
+			vel_Alt = (Altitude - prevAltitude) / Sampling_time_s;
 
+			predict(&fltd_alt, vel_Alt, Sampling_time_s);
 			fin_Alt = update(&fltd_alt, Altitude) / 10;
 
 			if (initIndex < initSize) {
