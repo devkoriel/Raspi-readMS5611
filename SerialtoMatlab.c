@@ -72,9 +72,9 @@ struct Kalman_set{
 
 struct Kalman_set fltd_alt;
 
-static const float R_alt = 0.3;
-static const float Q_alt = 0.01;	//0.01 (Kalman)
-static const float Q_Va = 0.04;	//0.04 (Kalman)
+static const float R_alt = 0.0030;
+static const float Q_alt = 0.0001;
+static const float Q_Va = 0.0004;
 
 void initKalman_set(struct Kalman_set *kalman, const float Q_alt, const float Q_Va, const float R_alt) {
 	kalman->Q_alt = Q_alt;
@@ -308,7 +308,7 @@ void main()
 		if (prevSampled_time > 0) {
 			predict(&fltd_alt, vel_Alt, Sampling_time);
 
-			fin_Alt = update(&fltd_alt, Altitude); // / 10;
+			fin_Alt = update(&fltd_alt, Altitude) / 10;
 
 			if (initIndex < initSize) {
 				alt_Init[initIndex] = fin_Alt;
@@ -334,12 +334,12 @@ void main()
 
 			}
 
+			printf("Altitude : %.2f m", Altitude);
 			printf(" Filtered Altitude : %.2f m\n", fin_Alt);
 		}
 
 		prevSampled_time = curSampled_time;
 
-		//printf("  Altitude : %.2f m", Altitude);
 		//printf("  Sampling Time : %ld ms\n", Sampling_time);
 
 		sprintf(tx_buffer, "%.2f", Altitude);
