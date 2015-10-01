@@ -72,6 +72,10 @@ struct Kalman_set{
 
 struct Kalman_set fltd_alt;
 
+static const float R_alt = 0.3;
+static const float Q_alt = 0.01;	//0.01 (Kalman)
+static const float Q_Va = 0.04;	//0.04 (Kalman)
+
 void initKalman_set(struct Kalman_set *kalman, const float Q_alt, const float Q_Va, const float R_alt) {
 	kalman->Q_alt = Q_alt;
 	kalman->Q_Va = Q_Va;
@@ -153,7 +157,7 @@ void predict(struct Kalman_set *kalman, float Va, float dt) {
 * alt_m 	the alt acquired from the MS5611
 */
 float update(struct Kalman_set *kalman, float alt_m) {
-	const float y = alt _m - kalman->kalman_alt;
+	const float y = alt_m - kalman->kalman_alt;
 	const float S = kalman->P_00 + kalman->R_alt;
 	const float K_0 = kalman->P_00 / S;
 	const float K_1 = kalman->P_10 / S;
@@ -168,7 +172,7 @@ float update(struct Kalman_set *kalman, float alt_m) {
 
 void main()
 {
-	int i;
+	int i, j;
 	int initIndex = 0;
 	int initSize = 10;
 
@@ -310,8 +314,8 @@ void main()
 				alt_Init[initIndex] = fin_Alt;
 				if (initIndex == initSize - 1) {
 					float sum = 0;
-					for (int k = 1; k <= initSize; k++) {
-						sum += alt_Init[k];
+					for (j = 1; j <= initSize; j++) {
+						sum += alt_Init[j];
 					}
 
 					Cal -= sum / (initSize - 1);
