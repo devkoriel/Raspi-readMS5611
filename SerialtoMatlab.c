@@ -250,7 +250,7 @@ void main()
 	initKalman_set(&fltd_alt, Q_alt, Q_Va, R_alt);
 
 	while (1){
-		clock_gettime(CLOCK_REALTIME, &spec);
+		clock_gettime(CLOCK_MONOTONIC, &spec);
 		curSampled_time = round(spec.tv_nsec / 1.0e6);
 
 		prevSampling_time = Sampling_time;
@@ -329,7 +329,7 @@ void main()
 			}
 			printf("Altitude : %.2f m", Altitude);
 			printf(" Filtered Altitude : %.2f m", fin_Alt);
-			printf("  Sampling Time : %.4f s\n", Sampling_time_s);
+			printf("  Sampling Time : %f ms\n", Sampling_time);
 		}
 
 		prevSampled_time = curSampled_time;
