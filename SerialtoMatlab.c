@@ -12,6 +12,8 @@
 #include <linux/types.h>
 #include <fcntl.h>
 #include <math.h>
+#include <time.h>
+#include <inttypes.h>
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
@@ -39,7 +41,7 @@
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
-#define SEA_LEVEL_PRESSURE 1023.20 // Seoul 1023.20hPa
+#define SEA_LEVEL_PRESSURE 1012.20 // Seoul
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
@@ -115,6 +117,9 @@ void main()
 
 	char tx_buffer[128];
 
+	long ms;
+	struct timespec spec;
+
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
 		printf("Failed to open the bus.\n");
 		return -1;
@@ -144,6 +149,8 @@ void main()
 		return 1;
 	}
 
+	serialFlush(fd_Serial);
+
 	if (wiringPiSetup() == -1)
 	{
 		fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
@@ -151,6 +158,9 @@ void main()
 	}
 
 	while (1){
+		clock_gettime(CLOCK_REALTIME, &spec);
+		curSampledTime = round(spec.tv_nsec / 1.0e6);
+
 		D1 = CONV_read(fd, CONV_D1_4096);
 		D2 = CONV_read(fd, CONV_D2_4096);
 
@@ -190,17 +200,21 @@ void main()
 		Temparature = (double)TEMP / (double)100;
 		Pressure = (double)P / (double)100;
 
-		//printf("Temparature : %.2f C", Temparature);
-		//printf("  Pressure : %.2f mbar", Pressure);
+		printf("Temparature : %.2f C", Temparature);
+		printf("  Pressure : %.2f mbar", Pressure);
 
 		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
-		//printf("  Altitude : %.2f m\n", Altitude);
+		printf("  Altitude : %.2f m", Altitude);
+		printf("  Sampling Time : %.2f ms\n", curSampledTime - prevSampledTime);
 
-		sprintf(tx_buffer, "float to string : %.2f", Altitude);
+		sprintf(tx_buffer, "%.2f", Altitude);
 		//puts(tx_buffer);
 
-		serialPuts(fd_Serial, &tx_buffer);
-		serialFlush(fd_Serial);
+		serialPuts(fd_Serial, tx_buffer);
+		usleep(1000);
+
+		prevSampledTime = curSampledTime;
 	}
+	serialClose(fd_Serial);
 }
