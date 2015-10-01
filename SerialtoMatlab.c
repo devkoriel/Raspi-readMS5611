@@ -303,35 +303,16 @@ void main()
 
 		prevAltitude = Altitude;
 		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
-		vel_Alt = (Altitude - prevAltitude) / Sampling_time;
+		vel_Alt = (Altitude - prevAltitude) / Sampling_time_s;
 
 		if (prevSampled_time > 0) {
-			predict(&fltd_alt, vel_Alt, Sampling_time);
+			predict(&fltd_alt, vel_Alt, Sampling_time_s);
 
 			fin_Alt = update(&fltd_alt, Altitude) / 10;
 
 			if (initIndex < initSize) {
-				alt_Init[initIndex] = fin_Alt;
-				if (initIndex == initSize - 1) {
-					float sum = 0;
-					for (j = 1; j <= initSize; j++) {
-						sum += alt_Init[j];
-					}
-
-					Cal -= sum / (initSize - 1);
-				}
+				fin_Alt = Altitude;
 				initIndex++;
-			}
-
-			else {
-				fin_Alt += Cal;
-
-				//
-				// if(gz1 < 1400 && -250 < gy1 && gy1 < 250 && gx1 < 500) {
-				//	Serial.print(F("Turn right"));
-				//	Serial.println(F(""));
-				//}
-
 			}
 
 			printf("Altitude : %.2f m", Altitude);
