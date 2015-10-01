@@ -175,6 +175,7 @@ void main()
 	int i, j;
 	int initIndex = 0;
 	int initSize = 10;
+	float sum = 0;
 
 	float alt_Init[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	float Cal = 0;
@@ -312,9 +313,21 @@ void main()
 			fin_Alt = update(&fltd_alt, Altitude) / 10;
 
 			if (initIndex < initSize) {
-				fin_Alt = Altitude;
+				alt_Init[initIndex] = fin_Alt;
+				if (initIndex == initSize - 1) {
+					for (j = 1; j <= initSize; j++) {
+						sum += alt_Init[j];
+					}
+
+					Cal -= sum / (initSize - 1);
+				}
 				initIndex++;
 			}
+
+			else {
+				fin_Alt += Cal;
+			}
+		}
 
 			printf("Altitude : %.2f m", Altitude);
 			printf(" Filtered Altitude : %.2f m\n", fin_Alt);
