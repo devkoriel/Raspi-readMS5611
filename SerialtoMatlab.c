@@ -221,7 +221,7 @@ void main()
 	float Altitude, prevAltitude;
 	float vel_Alt;
 	float kalman_Alt;
-	float LPF_Alt
+	float LPF_Alt;
 
 	char tx_buffer[128];
 
