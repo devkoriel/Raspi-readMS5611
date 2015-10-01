@@ -117,7 +117,7 @@ void main()
 
 	char tx_buffer[128];
 
-	long start_Time, end_Time;
+	long start_Time, end_Time, millis;
 	long Sampling_Time;
 	struct timespec spec;
 
@@ -160,7 +160,8 @@ void main()
 
 	while (1){
 		clock_gettime(CLOCK_REALTIME, &spec);
-		start_Time = round(spec.tv_nsec / 1.0e6);
+		millis = round(spec.tv_nsec / 1.0e6);
+		start_Time = millis;
 
 		D1 = CONV_read(fd, CONV_D1_4096);
 		D2 = CONV_read(fd, CONV_D2_4096);
@@ -214,8 +215,8 @@ void main()
 		serialPuts(fd_Serial, tx_buffer);
 		usleep(1000);
 
-		end_Time = round(spec.tv_nsec / 1.0e6);
-		Sampling_Time = end_Time - start_Time
+		end_Time = millis;
+		Sampling_Time = end_Time - start_Time;
 
 		printf("  Sampling Time : %ld ms\n", Sampling_Time);
 	}
