@@ -255,7 +255,7 @@ void main()
 		Altitude = ((pow((init_Pressure / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
 		if (prevSampled_time > 0) {
-			LPF_Alt = LPF(Altitude, 10, Sampling_time_s);
+			LPF_Alt = LPF(Altitude, 2.3, Sampling_time_s);
 
 			printf("Altitude : %.2f m", Altitude);
 			printf(" LPF : %.2f m", LPF_Alt);
