@@ -14,6 +14,7 @@
 #include <math.h>
 #include <time.h>
 #include <inttypes.h>
+#include "tmwtypes.h"
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
@@ -41,58 +42,13 @@
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
-#define SEA_LEVEL_PRESSURE 1012.20 // Seoul
-
-/* Kalman filter */
-struct Kalman_set{
-	/* These variables represent our state matrix x */
-	float kalman_alt, kalman_bias;
-
-	/* Our error covariance matrix */
-	float P_00, P_01, P_10, P_11;
-
-	/*
-	* Q is a 2x2 matrix of the covariance. Because we
-	* assume the gyro and accelerometer noise to be independent
-	* of each other, the covariances on the / diagonal are 0.
-	* Covariance Q, the process noise, from the assumption
-	* x = F x + B u + w
-	* with w having a normal distribution with covariance Q.
-	* (covariance = E[ (X - E[X])*(X - E[X])' ]
-	* We assume is linear with dt
-	*/
-	float Q_alt, Q_Va;
-
-	/*
-	* Covariance R, our observation noise (from the accelerometer)
-	* Also assumed to be linear with dt
-	*/
-	float R_alt
-};
-
-struct Kalman_set fltd_alt;
-
-// Kalman filter convariances
-static const float R_alt = 0.30;
-static const float Q_alt = 0.01;
-static const float Q_Va = 0.04;
+//#define SEA_LEVEL_PRESSURE 1012.20 // Seoul
 
 // LPF constants
 float LPF_error = 0;
 float LPF_ee = 0;
 float LPF_ee1 = 0;
 float LPF_ww = 0;
-
-void initKalman_set(struct Kalman_set *kalman, const float Q_alt, const float Q_Va, const float R_alt) {
-	kalman->Q_alt = Q_alt;
-	kalman->Q_Va = Q_Va;
-	kalman->R_alt = R_alt;
-
-	kalman->P_00 = 0;
-	kalman->P_01 = 0;
-	kalman->P_10 = 0;
-	kalman->P_11 = 0;
-}
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
@@ -142,47 +98,12 @@ long CONV_read(int DA, char CONV_CMD)
 	return ret;
 }
 
-/*
-* Predict
-*
-* kalman 		the kalman data structure
-* Va			Va = d(Altitude) / dt
-* dt 			the change in time, in seconds; in other words the amount of time it took to sweep Va
-*/
-void predict(struct Kalman_set *kalman, float Va, float dt) {
-	kalman->kalman_alt += dt * (Va - kalman->kalman_bias);
-	kalman->P_00 += -1 * dt * (kalman->P_10 + kalman->P_01) + dt*dt * kalman->P_11 + kalman->Q_alt;
-	kalman->P_01 += -1 * dt * kalman->P_11;
-	kalman->P_10 += -1 * dt * kalman->P_11;
-	kalman->P_11 += kalman->Q_Va;
-}
-
-/*
-* Update
-*
-* kalman 	the kalman data structure
-* alt_m 	the alt acquired from the MS5611
-*/
-float update(struct Kalman_set *kalman, float alt_m) {
-	const float y = alt_m - kalman->kalman_alt;
-	const float S = kalman->P_00 + kalman->R_alt;
-	const float K_0 = kalman->P_00 / S;
-	const float K_1 = kalman->P_10 / S;
-	kalman->kalman_alt += K_0 * y;
-	kalman->kalman_bias += K_1 * y;
-	kalman->P_00 -= K_0 * kalman->P_00;
-	kalman->P_01 -= K_0 * kalman->P_01;
-	kalman->P_10 -= K_1 * kalman->P_00;
-	kalman->P_11 -= K_1 * kalman->P_01;
-	return kalman->kalman_alt;
-}
-
 float LPF(float input, float CutOffFrequency, float SamplingTime)
 {
 	float output;
 
 	LPF_error = input - LPF_ww;
-	LPF_ee = LPF_error * CufOffFrequency;
+	LPF_ee = LPF_error * CutOffFrequency;
 	LPF_ww = LPF_ww + (LPF_ee + LPF_ee1)*SamplingTime*0.5;
 	LPF_ee1 = LPF_ee;
 	output = LPF_ww;
@@ -192,13 +113,7 @@ float LPF(float input, float CutOffFrequency, float SamplingTime)
 
 void main()
 {
-	int i, j;
-	int initIndex = 0;
-	int initSize = 10;
-	float sum = 0;
-
-	float alt_Init[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	float Cal = 0;
+	int i;
 
 	int fd, fd_Serial;
 
@@ -219,8 +134,6 @@ void main()
 	double Pressure;
 
 	float Altitude, prevAltitude;
-	float vel_Alt;
-	float kalman_Alt;
 	float LPF_Alt;
 
 	char tx_buffer[128];
@@ -268,7 +181,21 @@ void main()
 		return 1;
 	}
 
-	initKalman_set(&fltd_alt, Q_alt, Q_Va, R_alt);
+	D1 = CONV_read(fd, CONV_D1_4096);
+	D2 = CONV_read(fd, CONV_D2_4096);
+
+	dT = D2 - (uint32_t)C[5] * pow(2, 8);
+	TEMP = (2000 + (dT * (int64_t)C[5] / pow(2, 23)));
+
+	OFF = (int64_t)C[2] * pow(2, 16) + (dT*C[4]) / pow(2, 7);
+	SENS = (int32_t)C[1] * pow(2, 15) + dT*C[3] / pow(2, 8);
+
+	P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15));
+
+	init_Pressure = (double)P / (double)100;
+
+	printf("Pressure at Start Point : %.2f", init_Pressure);
+	usleep(3000000); 
 
 	while (1){
 		clock_gettime(CLOCK_MONOTONIC, &spec);
@@ -325,41 +252,19 @@ void main()
 		//printf("  Pressure : %.2f mbar", Pressure);
 
 		prevAltitude = Altitude;
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
+		Altitude = ((pow((init_Pressure / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
 
 		if (prevSampled_time > 0) {
-			vel_Alt = (Altitude - prevAltitude) / Sampling_time_s;
-
-			predict(&fltd_alt, vel_Alt, Sampling_time_s);
-			kalman_Alt = update(&fltd_alt, Altitude);
-
-			if (initIndex < initSize) {
-				alt_Init[initIndex] = kalman_Alt;
-				if (initIndex == initSize - 1) {
-					for (j = 1; j <= initSize; j++) {
-						sum += alt_Init[j];
-					}
-
-					Cal -= sum / (initSize - 1);
-				}
-				initIndex++;
-			}
-
-			else {
-				kalman_Alt += Cal;
-			}
-
-			LPF_Alt = LPF(Altitude, 15, Sampling_time_s);
+			LPF_Alt = LPF(Altitude, 10, Sampling_time_s);
 
 			printf("Altitude : %.2f m", Altitude);
-			printf(" Kalman : %.2f m", kalman_Alt);
 			printf(" LPF : %.2f m", LPF_Alt);
 			printf(" Sampling Time : %f s\n", Sampling_time_s);
 		}
 
 		prevSampled_time = curSampled_time;
 
-		sprintf(tx_buffer, "%.2f", Altitude);
+		sprintf(tx_buffer, "%.2f", LPF_Alt);
 		//puts(tx_buffer);
 
 		serialPuts(fd_Serial, tx_buffer);
