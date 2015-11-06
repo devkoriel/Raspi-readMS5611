@@ -12,6 +12,7 @@
 #include <linux/types.h>
 #include <fcntl.h>
 #include <math.h>
+#include <time.h>
 
 #define MS5611_ADDRESS 0x77
 
@@ -33,6 +34,9 @@
 #define OSR_1024     3000 //us
 #define OSR_2048     5000 //us
 #define OSR_4096     10000 //us
+
+#define alpha 0.96
+#define beta 0.96
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
@@ -105,10 +109,16 @@ void main()
 	int64_t SENS;
 	int32_t P;
 
-	double Temparature;
-	double Pressure;
+	double Temparature, fltd_Temparature, pre_fltd_Temparature;
+	double Pressure, fltd_Pressure, pre_fltd_Pressure;
 
-	float Altitude;
+	float Altitude, pre_Altitude;
+	int roc;
+
+	long curSampled_time = 0;
+	long prevSampled_time = 0;
+	float Sampling_time, prevSampling_time;
+	struct timespec spec;
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
 		printf("Failed to open the bus.\n");
@@ -134,6 +144,15 @@ void main()
 	}
 
 	while (1){
+		clock_gettime(CLOCK_MONOTONIC, &spec);
+		curSampled_time = round(spec.tv_nsec / 1.0e6);
+
+		prevSampling_time = Sampling_time;
+		Sampling_time = (float)curSampled_time - (float)prevSampled_time;
+
+		if (Sampling_time < 0) // to prevent negative sampling time
+			Sampling_time = prevSampling_time;
+
 		D1 = CONV_read(fd, CONV_D1_4096);
 		D2 = CONV_read(fd, CONV_D2_4096);
 
@@ -173,12 +192,29 @@ void main()
 		Temparature = (double)TEMP / (double)100;
 		Pressure = (double)P / (double)100;
 
-		printf("Temparature : %.2f C", Temparature);
-		printf("  Pressure : %.2f mbar", Pressure);
+		if (prevSampled_time == 0)
+		{
+			pre_fltd_Temparature = Temparature;
+			pre_fltd_Pressure = Pressure;
+		}
 
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / Pressure), 1 / 5.257) - 1.0) * (Temparature + 273.15)) / 0.0065;
+		fltd_Temparature = alpha * pre_fltd_Temparature + (1 - alpha) * Temparature;
+		fltd_Pressure = beta * pre_fltd_Pressure + (1 - beta) * Pressure;
 
-		printf("  Altitude : %.2f m\n", Altitude);
+		pre_fltd_Temparature = fltd_Temparature;
+		pre_fltd_Pressure = fltd_Pressure;
 
+		//printf("Temparature : %.2f C", fltd_Temparature);
+		//printf("  Pressure : %.2f mbar", fltd_Pressure);
+
+		Altitude = ((pow((SEA_LEVEL_PRESSURE / fltd_Pressure), 1 / 5.257) - 1.0) * (fltd_Temparature + 273.15)) / 0.0065;
+
+		roc = (int)(100000 * (Altitude - pre_Altitude) / Sampling_time);
+
+		pre_Altitude = Altitude;
+
+		printf("Rate of Climb : %d cm/s\n", roc);
+
+		prevSampled_time = curSampled_time;
 	}
 }
