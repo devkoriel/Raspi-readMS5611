@@ -37,6 +37,7 @@
 
 #define alpha 0.96
 #define beta 0.96
+#define gamma 0.96
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
@@ -109,11 +110,11 @@ void main()
 	int64_t SENS;
 	int32_t P;
 
-	double Temparature, fltd_Temparature, pre_fltd_Temparature;
-	double Pressure, fltd_Pressure, pre_fltd_Pressure;
+	double Temparature, fltd_Temparature;
+	double Pressure, fltd_Pressure;
 
 	float Altitude, pre_Altitude;
-	int roc;
+	int roc, fltd_roc;
 
 	long curSampled_time = 0;
 	long prevSampled_time = 0;
@@ -189,31 +190,40 @@ void main()
 
 		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15));
 
-		Temparature = (double)TEMP / (double)100;
+		//Temparature = (double)TEMP / (double)100;
 		Pressure = (double)P / (double)100;
 
 		if (prevSampled_time == 0)
 		{
-			pre_fltd_Temparature = Temparature;
-			pre_fltd_Pressure = Pressure;
+			//fltd_Temparature = Temparature;
+			fltd_Pressure = Pressure;
 		}
 
-		fltd_Temparature = alpha * pre_fltd_Temparature + (1 - alpha) * Temparature;
-		fltd_Pressure = beta * pre_fltd_Pressure + (1 - beta) * Pressure;
-
-		pre_fltd_Temparature = fltd_Temparature;
-		pre_fltd_Pressure = fltd_Pressure;
+		//fltd_Temparature = alpha * fltd_Temparature + (1 - alpha) * Temparature;
+		fltd_Pressure = beta * fltd_Pressure + (1 - beta) * Pressure;
 
 		//printf("Temparature : %.2f C", fltd_Temparature);
 		//printf("  Pressure : %.2f mbar", fltd_Pressure);
 
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / fltd_Pressure), 1 / 5.257) - 1.0) * (fltd_Temparature + 273.15)) / 0.0065;
+		Altitude = 44330.0f * (1.0f - pow((double)fltd_Pressure / (double)SEA_LEVEL_PRESSURE, 0.1902949f));
+
+		if (prevSampled_time == 0)
+		{
+			pre_Altitude = Altitude;
+		}
 
 		roc = (int)(100000 * (Altitude - pre_Altitude) / Sampling_time);
 
+		if (prevSampled_time == 0)
+		{
+			fltd_roc = roc;
+		}
+
+		fltd_roc = gamma * fltd_roc + (1 - gamma) * roc;
+
 		pre_Altitude = Altitude;
 
-		printf("Rate of Climb : %d cm/s\n", roc);
+		printf("Altitude : %.2f   Rate of Climb : %d cm/s\n", Altitude, roc);
 
 		prevSampled_time = curSampled_time;
 	}
