@@ -40,7 +40,7 @@
 
 // check daily sea level pressure at 
 // http://www.kma.go.kr/weather/observation/currentweather.jsp
-#define SEA_LEVEL_PRESSURE 102320 // Seoul 1023.20hPa
+#define SEA_LEVEL_PRESSURE 1023.20 // Seoul 1023.20hPa
 
 unsigned int PROM_read(int DA, char PROM_CMD)
 {
@@ -104,18 +104,20 @@ void main()
 	char RESET = 0x1E;
 
 	int64_t dT;
-	int32_t TEMP, fltd_TEMP, pre_fltd_TEMP;
+	int32_t TEMP;
 	int64_t OFF;
 	int64_t SENS;
-	int32_t P, fltd_P, pre_fltd_P;
+	int32_t P;
+
+	double Temparature, fltd_Temparature, pre_fltd_Temparature;
+	double Pressure, fltd_Pressure, pre_fltd_Pressure;
 
 	float Altitude, pre_Altitude;
-
 	int roc;
 
-	uint32_t curSampled_time = 0;
-	uint32_t prevSampled_time = 0;
-	uint32_t Sampling_time, prevSampling_time;
+	long curSampled_time = 0;
+	long prevSampled_time = 0;
+	float Sampling_time, prevSampling_time;
 	struct timespec spec;
 
 	if ((fd = open("/dev/i2c-1", O_RDWR)) < 0){
@@ -187,24 +189,27 @@ void main()
 
 		P = ((((int64_t)D1*SENS) / pow(2, 21) - OFF) / pow(2, 15));
 
+		Temparature = (double)TEMP / (double)100;
+		Pressure = (double)P / (double)100;
+
 		if (prevSampled_time == 0)
 		{
-			pre_fltd_TEMP = TEMP;
-			pre_fltd_P = P;
+			pre_fltd_Temparature = Temparature;
+			pre_fltd_Pressure = Pressure;
 		}
 
-		fltd_TEMP = alpha * pre_fltd_TEMP + (1 - alpha) * TEMP;
-		fltd_P = beta * pre_fltd_P + (1 - beta) * P;
+		fltd_Temparature = alpha * pre_fltd_Temparature + (1 - alpha) * Temparature;
+		fltd_Pressure = beta * pre_fltd_Pressure + (1 - beta) * Pressure;
 
-		pre_fltd_TEMP = fltd_TEMP;
-		pre_fltd_P = fltd_P;
+		pre_fltd_Temparature = fltd_Temparature;
+		pre_fltd_Pressure = fltd_Pressure;
 
 		//printf("Temparature : %.2f C", fltd_Temparature);
 		//printf("  Pressure : %.2f mbar", fltd_Pressure);
 
-		Altitude = ((pow((SEA_LEVEL_PRESSURE / fltd_Pressure), 1 / 5.257) - 1.0) * (fltd_TEMP + 27315)) / 0.0065; //cm
+		Altitude = ((pow((SEA_LEVEL_PRESSURE / fltd_Pressure), 1 / 5.257) - 1.0) * (fltd_Temparature + 273.15)) / 0.0065;
 
-		roc = (int)(1000 * (Altitude - pre_Altitude) / Sampling_time);
+		roc = (int)(100000 * (Altitude - pre_Altitude) / Sampling_time);
 
 		pre_Altitude = Altitude;
 
